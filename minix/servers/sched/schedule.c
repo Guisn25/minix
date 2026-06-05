@@ -160,7 +160,7 @@ int do_start_scheduling(message *m_ptr)
 	/* Populate process slot */
 	rmp->endpoint     = m_ptr->m_lsys_sched_scheduling_start.endpoint;
 	rmp->parent       = m_ptr->m_lsys_sched_scheduling_start.parent;
-	rmp->max_priority = m_ptr->m_lsys_sched_scheduling_start.maxprio;
+	rmp->max_priority = USER_Q
 	if (rmp->max_priority >= NR_SCHED_QUEUES) {
 		return EINVAL;
 	}
@@ -204,7 +204,7 @@ int do_start_scheduling(message *m_ptr)
 				&parent_nr_n)) != OK)
 			return rv;
 
-		rmp->priority = schedproc[parent_nr_n].priority;
+		rmp->priority = USER_Q;
 		rmp->time_slice = schedproc[parent_nr_n].time_slice;
 		break;
 		
@@ -269,7 +269,7 @@ int do_nice(message *m_ptr)
 	}
 
 	rmp = &schedproc[proc_nr_n];
-	new_q = m_ptr->m_pm_sched_scheduling_set_nice.maxprio;
+	new_q = USER_Q;
 	if (new_q >= NR_SCHED_QUEUES) {
 		return EINVAL;
 	}
