@@ -1779,13 +1779,6 @@ void dequeue(struct proc *rp)
   assert(runqueues_ok_local());
 #endif
 }
-static unsigned RNG_seed = 156554;
-
-static unsigned RNG(){
-    RNG_seed = RNG_seed * 1543397*97 + 12345;
-
-    return RNG_seed;
-}
 
 /*===========================================================================*
  *				pick_proc				     * 
@@ -1800,40 +1793,24 @@ static struct proc * pick_proc(void)
  */
   register struct proc *rp;			/* process to run */
   struct proc **rdy_head;
-	                       /* iterate over queues */
+  int q;				/* iterate over queues */
 
   /* Check each of the scheduling queues for ready processes. The number of
    * queues is defined in proc.h, and priorities are set in the task table.
    * If there are no processes ready to run, return NULL.
    */
   rdy_head = get_cpulocal_var(run_q_head);
-  int total_tickets = 0;
-  int winner;
-	
-  for(rp = rdy_head[0]; rp != NULL; rp = rp->p_nextready){
-    total_tickets += rp->p_tickets;
+  for (q=0; q < NR_SCHED_QUEUES; q++) {	
+	if(!(rp = rdy_head[q])) {
+		TRACE(VF_PICKPROC, printf("cpu %d queue %d empty\n", cpuid, q););
+		continue;
+	}
+	assert(proc_is_runnable(rp));
+	if (priv(rp)->s_flags & BILLABLE)	 	
+		get_cpulocal_var(bill_ptr) = rp; /* bill for system time */
+	return rp;
   }
-  if(total_tickets == 0){
-    TRACE(VF_PICKPROC, printf("cpu %d queue %d empty\n", cpuid, 0););
-	return NULL;
-  }
-
-  winner = RNG() % total_tickets;
-
-  int count = 0;
-
-  for(rp = rdy_head[0]; rp != NULL;rp = rp->p_nextready){
-    count += rp->p_tickets;
-
-    if(winner < count)
-        break;
-  }
-  assert(proc_is_runnable(rp));
-  /* bill for system time */
-  if(priv(rp)->s_flags & BILLABLE){	 	
-	get_cpulocal_var(bill_ptr) = rp;
-  }
-  return rp;
+  return NULL;
 }
 
 /*===========================================================================*
