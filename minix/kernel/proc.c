@@ -1916,7 +1916,7 @@ static void notify_scheduler(struct proc *p)
 
 void proc_no_time(struct proc * p)
 {
-	if (!proc_kernel_scheduler(p) && priv(p)->s_flags & PREEMPTIBLE) {
+	if (!proc_kernel_scheduler(p) && priv(p)->s_flags & PREEMPTIBLE && p->p_priority != 7) {
 		/* this dequeues the process */
 		notify_scheduler(p);
 	}
